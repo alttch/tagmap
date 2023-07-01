@@ -200,14 +200,14 @@ impl TagMap {
                             let idx = tag.range.from.unwrap_or_default();
                             if seq.len() < idx + 1 {
                                 seq.resize(idx + 1, Value::Unit);
-                                seq[idx] = value;
                             }
+                            seq[idx] = value;
                         } else if let Value::Seq(s) = value {
                             if s.len() != len {
                                 return Err(Error::invalid_params("invalid value seq len"));
                             }
                             // set array part
-                            let last_idx = tag.range.to.unwrap_or_default();
+                            let last_idx = tag.range.to.unwrap_or_default() + 1;
                             let tail = if last_idx > seq.len() {
                                 None
                             } else {
@@ -248,9 +248,9 @@ impl TagMap {
                 self.tags.insert(tag.id, Value::Seq(result));
             } else if let Some(len) = tag.range_len() {
                 if len == 1 {
-                    let mut result = Vec::with_capacity(tag.range.from.unwrap_or_default());
-                    result.resize(tag.range.from.unwrap_or_default(), Value::Unit);
-                    result.push(value);
+                    let idx = tag.range.from.unwrap_or_default();
+                    let mut result = vec![Value::Unit; idx + 1];
+                    result[idx] = value;
                     self.tags.insert(tag.id, Value::Seq(result));
                 } else {
                     return Err(Error::invalid_params("value is not a seq"));
