@@ -137,6 +137,20 @@ pub struct TagMap {
 }
 
 impl TagMap {
+    pub fn tags(&self) -> &BTreeMap<TagId, Value> {
+        &self.tags
+    }
+    pub fn tag_mut(&mut self) -> &mut BTreeMap<TagId, Value> {
+        &mut self.tags
+    }
+    pub fn delete(&mut self, tag: Tag) -> EResult<()> {
+        if tag.has_range() {
+            Err(Error::invalid_params("can not delete range"))
+        } else {
+            self.tags.remove(&tag.id);
+            Ok(())
+        }
+    }
     pub fn get(&mut self, tag: Tag) -> EResult<Value> {
         if let Some(val) = self.tags.get(&tag.id) {
             if tag.has_range() {
