@@ -3,11 +3,21 @@ use std::collections::BTreeMap;
 use std::str::FromStr;
 use uuid::Uuid;
 
+// TODO num and guid are not fully supported for prod (no parsing/as string)
 #[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord)]
 pub enum TagId {
     Str(String),
     Num(u64),
     Guid(Uuid),
+}
+
+impl TagId {
+    pub fn as_str(&self) -> Option<&str> {
+        match self {
+            TagId::Str(v) => Some(v.as_str()),
+            _ => None,
+        }
+    }
 }
 
 impl From<&str> for TagId {
