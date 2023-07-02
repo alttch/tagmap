@@ -1,6 +1,7 @@
 use eva_common::prelude::*;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::BTreeMap;
+use std::fmt;
 use std::str::FromStr;
 
 // TODO nums are not fully supported for prod (no parsing/as string)
@@ -16,6 +17,15 @@ impl TagId {
         match self {
             TagId::Str(v) => Some(v.as_str()),
             TagId::Num(_) => None,
+        }
+    }
+}
+
+impl fmt::Display for TagId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TagId::Str(v) => write!(f, "{}", v),
+            TagId::Num(v) => write!(f, "{}", v),
         }
     }
 }
@@ -57,6 +67,33 @@ impl Range {
 pub struct Tag {
     id: TagId,
     pub range: Range,
+}
+
+impl fmt::Display for Tag {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.id)?;
+        if self.has_range() {
+            write!(f, "[")?;
+            let mut written = false;
+            if let Some(len) = self.range_len() {
+                if len == 1 {
+                    write!(f, "{}", self.range.from.unwrap_or_default())?;
+                    written = true;
+                }
+            }
+            if !written {
+                if let Some(from) = self.range.from {
+                    write!(f, "{}", from)?;
+                }
+                write!(f, "-")?;
+                if let Some(to) = self.range.to {
+                    write!(f, "{}", to)?;
+                }
+            }
+            write!(f, "]")?;
+        }
+        Ok(())
+    }
 }
 
 macro_rules! impl_to_tag {
@@ -274,5 +311,28 @@ impl TagMap {
             self.tags.insert(tag.id, value);
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::Tag;
+
+    #[test]
+    fn test_parse_display() {
+        let tag: Tag = "test".parse().unwrap();
+        assert_eq!(tag.to_string(), "test");
+
+        let tag: Tag = "test[1]".parse().unwrap();
+        assert_eq!(tag.to_string(), "test[1]");
+
+        let tag: Tag = "test[-1]".parse().unwrap();
+        assert_eq!(tag.to_string(), "test[-1]");
+
+        let tag: Tag = "test[1-]".parse().unwrap();
+        assert_eq!(tag.to_string(), "test[1-]");
+
+        let tag: Tag = "test[1-5]".parse().unwrap();
+        assert_eq!(tag.to_string(), "test[1-5]");
     }
 }
