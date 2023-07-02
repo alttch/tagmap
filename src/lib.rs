@@ -173,7 +173,7 @@ impl TagMap {
             Ok(())
         }
     }
-    pub fn get(&mut self, tag: Tag) -> EResult<Value> {
+    pub fn get(&mut self, tag: &Tag) -> EResult<Value> {
         if let Some(val) = self.tags.get(&tag.id) {
             if tag.has_range() {
                 if let Value::Seq(seq) = val {
