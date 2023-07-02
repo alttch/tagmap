@@ -1,21 +1,21 @@
 use eva_common::prelude::*;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::BTreeMap;
 use std::str::FromStr;
-use uuid::Uuid;
 
-// TODO num and guid are not fully supported for prod (no parsing/as string)
-#[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord)]
+// TODO nums are not fully supported for prod (no parsing/as string)
+#[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum TagId {
     Str(String),
     Num(u64),
-    Guid(Uuid),
 }
 
 impl TagId {
     pub fn as_str(&self) -> Option<&str> {
         match self {
             TagId::Str(v) => Some(v.as_str()),
-            _ => None,
+            TagId::Num(_) => None,
         }
     }
 }
@@ -38,13 +38,6 @@ impl From<u64> for TagId {
     #[inline]
     fn from(u: u64) -> Self {
         Self::Num(u)
-    }
-}
-
-impl From<Uuid> for TagId {
-    #[inline]
-    fn from(u: Uuid) -> Self {
-        Self::Guid(u)
     }
 }
 
@@ -80,7 +73,6 @@ macro_rules! impl_to_tag {
 impl_to_tag!(&str);
 impl_to_tag!(String);
 impl_to_tag!(u64);
-impl_to_tag!(Uuid);
 
 impl Tag {
     #[inline]
@@ -144,6 +136,26 @@ impl FromStr for Tag {
 #[derive(Debug, Clone, Default)]
 pub struct TagMap {
     tags: BTreeMap<TagId, Value>,
+}
+
+impl Serialize for TagMap {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.tags.serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for TagMap {
+    #[inline]
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let tags: BTreeMap<TagId, Value> = Deserialize::deserialize(deserializer)?;
+        Ok(Self { tags })
+    }
 }
 
 impl TagMap {
