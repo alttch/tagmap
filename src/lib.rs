@@ -65,7 +65,7 @@ impl Range {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Tag {
-    id: TagId,
+    pub id: TagId,
     pub range: Range,
 }
 
